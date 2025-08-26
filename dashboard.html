@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+</head>
+<body class="bg-light">
+    <div class="container mt-5 text-center">
+        <h2>Welcome to Pharmacy Management System</h2>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        {% if expired %}
+            <div class="alert alert-warning">
+                <strong>Expired!</strong> The following medicines have expired:
+                <ul>
+                    {% for medicine, expiry_date in expired %}
+                        <li><strong>{{ medicine }}</strong> (Expiry: {{ expiry_date }})</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        {% endif %}
+
+        {% if soon_to_expire %}
+            <div class="alert alert-warning">
+                <strong>Warning!</strong> The following medicines are expiring soon:
+                <ul>
+                    {% for medicine, expiry_date in soon_to_expire %}
+                        <li><strong>{{ medicine }}</strong> (Expiry: {{ expiry_date }})</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        {% endif %}
+
+        {% if critical_stock %}
+            <div class="alert alert-danger">
+                <strong>Critical Stock (≤ 5 units):</strong>
+                <ul>
+                    {% for medicine, quantity in critical_stock %}
+                        <li><strong>{{ medicine }}</strong> (Quantity: {{ quantity }})</li>
+                    {% endfor %}
+                </ul>
+                <a href="{{ url_for('low_stock_report') }}" class="btn btn-sm btn-danger">View Full Report</a>
+            </div>
+        {% endif %}
+
+        {% if low_stock %}
+            <div class="alert alert-warning">
+                <strong>Low Stock (≤ 10 units):</strong>
+                <ul>
+                    {% for medicine, quantity in low_stock %}
+                        <li><strong>{{ medicine }}</strong> (Quantity: {{ quantity }})</li>
+                    {% endfor %}
+                </ul>
+                <a href="{{ url_for('low_stock_report') }}" class="btn btn-sm btn-warning">View Full Report</a>
+            </div>
+        {% endif %}
+
+        <div class="mt-4">
+            <a href="/add_medicine" class="btn btn-primary btn-lg m-2">Add Medicine</a>
+            <a href="/get_medicine" class="btn btn-success btn-lg m-2">Get Medicine Details</a>
+            <a href="/delete_medicine" class="btn btn-success btn-lg m-2">Delete Medicine</a>
+            <a href="/batch_medicines" class="btn btn-success btn-lg m-2">Batch Medicine Details</a>
+            <a href="/sell_medicine" class="btn btn-success btn-lg m-2">Sell Medicine</a>
+            <a href="/sales_history" class="btn btn-success btn-lg m-2">Sales History</a>
+             <a href="/sales_dates" class="btn btn-success btn-lg m-2">Medicine Sales History</a>
+            <a href="/logout" class="btn btn-secondary btn-lg m-2">Logout</a>
+        </div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

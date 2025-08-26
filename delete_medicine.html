@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Delete Medicine - Pharmacy Management System</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <style>
+        .autocomplete-suggestions {
+            position: absolute;
+            z-index: 1000;
+            width: 100%;
+            max-height: 200px;
+            overflow-y: auto;
+            border: 1px solid #ced4da;
+            border-top: none;
+            background-color: white;
+            border-radius: 0 0 0.25rem 0.25rem;
+        }
+        .autocomplete-suggestion {
+            padding: 8px 12px;
+            cursor: pointer;
+        }
+        .autocomplete-suggestion:hover {
+            background-color: #e9ecef;
+        }
+    </style>
+</head>
+<body class="bg-light">
+
+    <div class="container mt-5">
+        <h2 class="text-center">Delete Medicine</h2>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <form method="POST" action="/delete_medicine" class="p-4 bg-white shadow rounded">
+            <div class="mb-3 position-relative">
+                <label for="medicine_name" class="form-label">Medicine Name:</label>
+                <input type="text" name="medicine_name" id="medicine_name" class="form-control" required autocomplete="off">
+                <div id="medicine_suggestions" class="autocomplete-suggestions" style="display: none;"></div>
+            </div>
+            <div class="mb-3">
+                <label for="batch_no" class="form-label">Batch Number:</label>
+                <input type="text" name="batch_no" id="batch_no" class="form-control" required>
+            </div>
+            <button type="submit" class="btn btn-danger">Delete Medicine</button>
+            <a href="/dashboard" class="btn btn-secondary">Back</a>
+        </form>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        const medicineInput = document.getElementById('medicine_name');
+        const suggestionsDiv = document.getElementById('medicine_suggestions');
+
+        medicineInput.addEventListener('input', async function () {
+            const query = this.value.trim();
+            if (query.length === 0) {
+                suggestionsDiv.style.display = 'none';
+                return;
+            }
+
+            try {
+                const response = await fetch(`/medicine_suggestions?query=${encodeURIComponent(query)}`);
+                if (!response.ok) {
+                    console.error('Error fetching suggestions:', response.statusText);
+                    return;
+                }
+                const medicines = await response.json();
+
+                suggestionsDiv.innerHTML = '';
+                if (medicines.length === 0) {
+                    suggestionsDiv.style.display = 'none';
+                } else {
+                    medicines.forEach(medicine => {
+                        const div = document.createElement('div');
+                        div.className = 'autocomplete-suggestion';
+                        div.textContent = medicine;
+                        div.addEventListener('click', () => {
+                            medicineInput.value = medicine;
+                            suggestionsDiv.style.display = 'none';
+                        });
+                        suggestionsDiv.appendChild(div);
+                    });
+                    suggestionsDiv.style.display = 'block';
+                }
+            } catch (error) {
+                console.error('Error fetching medicine suggestions:', error);
+            }
+        });
+
+        // Hide suggestions when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!medicineInput.contains(e.target) && !suggestionsDiv.contains(e.target)) {
+                suggestionsDiv.style.display = 'none';
+            }
+        });
+    </script>
+</body>
+</html>

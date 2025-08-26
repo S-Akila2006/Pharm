@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Get Medicine Details</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"/>
+</head>
+<body class="bg-light">
+  <div class="container mt-5">
+    <h2 class="text-center">Get Medicine Details</h2>
+    <form method="POST" action="/get_medicine" class="p-4 bg-white shadow rounded">
+
+      <!-- Medicine Input + Dropdown -->
+      <div class="mb-3">
+        <label class="form-label">Enter Medicine Name:</label>
+        <div class="input-group">
+          <input type="text" id="medicineInput" name="name" class="form-control" onkeyup="fetchMedicineSuggestions()" autocomplete="off" required>
+          <select id="medicineDropdown" class="form-select" onchange="selectMedicine(this.value)" onclick="this.focus()">
+            <option value="" disabled selected>Select a medicine</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Brand Input + Dropdown -->
+      <div class="mb-3">
+        <label class="form-label">Select Brand Name:</label>
+        <select id="brandDropdown" name="brand" class="form-select" required></select>
+      </div>
+
+      <button type="submit" class="btn btn-success">Get Details</button>
+      <a href="/dashboard" class="btn btn-secondary">Back</a>
+    </form>
+
+    <!-- Show medicine details -->
+    {% if result %}
+    <div class="mt-4 p-3 bg-white shadow rounded">
+      <h4>Medicine Details</h4>
+      <p><strong>Name:</strong> {{ result.name }}</p>
+      <p><strong>Brand:</strong> {{ result.brand }}</p>
+      <p><strong>Actual Price:</strong> ₹{{ result.price }}</p>
+      <p><strong>Discount:</strong> {{ result.discount }}%</p>
+      <p><strong>Final Price:</strong> ₹{{ result.final_price }}</p>
+      <p><strong>Quantity:</strong> {{ result.quantity }}</p>
+      <p><strong>Expiry Date:</strong> {{ result.expiry_date }}</p>
+      <p><strong>Batch No:</strong> {{ result.batch_no }}</p>
+      <p><strong>Batch Date:</strong> {{ result.batch_date }}</p>
+    </div>
+    {% endif %}
+
+    {% if error %}
+    <div class="mt-4 p-3 bg-danger text-white shadow rounded">
+      <h4>Error</h4>
+      <p>{{ error }}</p>
+    </div>
+    {% endif %}
+
+    <!-- Find Best Offer -->
+    <div class="mt-5 p-4 bg-white shadow rounded">
+      <h4>Find Best Offer for a Medicine</h4>
+      <div class="mb-3">
+        <label for="offerInput" class="form-label">Enter Medicine Name:</label>
+        <div class="input-group">
+          <input type="text" id="offerInput" class="form-control" onkeyup="fetchOfferSuggestions()" placeholder=" " autocomplete="off">
+          <select id="offerDropdown" class="form-select" onchange="selectOfferMedicine(this.value)">
+            <option value="" disabled selected>Select a medicine</option>
+          </select>
+        </div>
+      </div>
+      <button class="btn btn-info" onclick="findBestOffer()">Find Best Offer</button>
+      <a href="/dashboard" class="btn btn-secondary">Back</a>
+      <div id="offerResult" class="mt-3"></div>
+    </div>
+  </div>
+
+  <script>
+    function fetchMedicineSuggestions() {
+      const query = document.getElementById('medicineInput').value;
+      const dropdown = document.getElementById('medicineDropdown');
+      if (!query) {
+        dropdown.innerHTML = '<option value="" disabled selected>Select a medicine</option>';
+        document.getElementById('brandDropdown').innerHTML = '';
+        return;
+      }
+
+      fetch(`/search_medicine?q=${query}`)
+        .then(response => response.json())
+        .then(data => {
+          dropdown.innerHTML = '<option value="" disabled selected>Select a medicine</option>';
+          data.forEach(item => {
+            const option = document.createElement('option');
+            option.value = item;
+            option.textContent = item;
+            dropdown.appendChild(option);
+          });
+          dropdown.value = ''; // Ensure no option is pre-selected
+          if (data.length > 0) {
+            fetchBrandSuggestions();
+          }
+        });
+    }
+
+    function selectMedicine(value) {
+      if (value) { // Only proceed if a valid value is selected
+        document.getElementById('medicineInput').value = value;
+        fetchBrandSuggestions();
+      }
+    }
+
+    function fetchBrandSuggestions() {
+      const medicine = document.getElementById('medicineInput').value;
+      if (!medicine) return;
+
+      fetch(`/get_brands?medicine=${medicine}`)
+        .then(response => response.json())
+        .then(data => {
+          const dropdown = document.getElementById('brandDropdown');
+          dropdown.innerHTML = ''; // Clear old options
+          data.forEach(item => {
+            const option = document.createElement('option');
+            option.value = item;
+            option.textContent = item;
+            dropdown.appendChild(option);
+          });
+        });
+    }
+
+    // Offer dropdown logic
+    function fetchOfferSuggestions() {
+      const query = document.getElementById('offerInput').value;
+      const dropdown = document.getElementById('offerDropdown');
+      if (!query) {
+        dropdown.innerHTML = '<option value="" disabled selected>Select a medicine</option>';
+        return;
+      }
+
+      fetch(`/search_medicine?q=${query}`)
+        .then(response => response.json())
+        .then(data => {
+          dropdown.innerHTML = '<option value="" disabled selected>Select a medicine</option>';
+          data.forEach(item => {
+            const option = document.createElement('option');
+            option.value = item;
+            option.textContent = item;
+            dropdown.appendChild(option);
+          });
+          dropdown.value = ''; // Ensure no option is pre-selected
+        });
+    }
+
+    function selectOfferMedicine(value) {
+      if (value) { // Only proceed if a valid value is selected
+        document.getElementById('offerInput').value = value;
+      }
+    }
+
+    function findBestOffer() {
+      const name = document.getElementById('offerInput').value;
+      fetch(`/best_offer?name=${name}`)
+        .then(res => res.json())
+        .then(data => {
+          const resultDiv = document.getElementById('offerResult');
+          if (data.error) {
+            resultDiv.innerHTML = `<div class="alert alert-danger">${data.error}</div>`;
+          } else {
+            resultDiv.innerHTML = `
+              <div class="alert alert-success">
+                <strong>Actual Price:</strong> ₹${data.price}<br>
+                <strong>Best Offer:</strong> ${data.brand} with ${parseInt(data.discount)}% discount<br>
+                <strong>Final Price:</strong> ₹${data.final_price}
+              </div>
+            `;
+          }
+        });
+    }
+  </script>
+</body>
+</html>

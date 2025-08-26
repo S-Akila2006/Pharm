@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Sell Medicine</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+</head>
+<body class="bg-light">
+    <div class="container mt-5">
+        <h2 class="text-center">Sell Medicine</h2>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <form method="POST" class="mt-4">
+            <div class="mb-3">
+                <label for="medicine" class="form-label">Select Medicine</label>
+                <select class="form-select" name="medicine" id="medicine" required>
+                    <option value="" disabled selected>Select a medicine</option>
+                    {% for med in medicines %}
+                        <option value="{{ med }}">{{ med }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="mb-3">
+                <label for="brand" class="form-label">Select Brand</label>
+                <select class="form-select" name="brand" id="brand" required>
+                    <option value="" disabled selected>Select brand</option>
+                    <!-- Options will be added dynamically -->
+                </select>
+            </div>
+
+            <div class="mb-3">
+                <label for="quantity" class="form-label">Quantity to Sell</label>
+                <input type="number" class="form-control" name="quantity" min="1" required>
+            </div>
+            <button type="submit" class="btn btn-success">Sell</button>
+            <a href="/dashboard" class="btn btn-secondary">Back</a>
+        </form>
+    </div>
+
+    <script>
+        document.getElementById('medicine').addEventListener('change', function () {
+            const medicine = this.value;
+            fetch(`/search_brands?medicine=${medicine}`)
+                .then(res => res.json())
+                .then(data => {
+                    const brandSelect = document.getElementById('brand');
+                    brandSelect.innerHTML = '<option value="" disabled selected>Select brand</option>';
+                    data.forEach(item => {
+                        const option = document.createElement('option');
+                        option.value = item.brand;
+                        option.textContent = `${item.brand} (Available: ${item.quantity})`;
+                        brandSelect.appendChild(option);
+                    });
+                });
+        });
+    </script>
+</body>
+</html>
